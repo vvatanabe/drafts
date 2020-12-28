@@ -195,19 +195,19 @@ Batch API:  https://example.com/foo/bar.git/info/lfs/objects/batch
 
 Git LFSコマンドがGit LFS APIのURLを構築する仕組みの詳細は、[Server Discovery](https://github.com/git-lfs/git-lfs/blob/master/docs/api/server-discovery.md)に記載されています。
 
-#### URI, メソッド, ヘッダのルール
+#### パス, メソッド, ヘッダーのルール
 
-以下は、Batch APIのURLを形成する、URI, メソッド, ヘッダのルールです。
+以下は、Batch APIのURLを形成する、パス, メソッド, ヘッダーのルールです。
 
-URI
+Path:
 
 `*/lfs/info/objects/batch`
 
-Method
+Method:
 
 `POST`
 
-Header
+Header:
 
 ```
 Accept: application/vnd.git-lfs+json
@@ -237,31 +237,39 @@ Content-Type: application/vnd.git-lfs+json
 }
 ```
 
-``operation``
+`operation`
 
-- Git LFSで管理しているファイルの転送種別を示します。
-- 値は文字列の`download`か`upload`である必要があります。
+Git LFSで管理しているファイルの転送種別を示します。値は文字列の`download`か`upload`である必要があります。
 
-``transfers``
+`transfers`
 
-- Git LFS クライアントが設定した転送方式を示します。現在（2020/12）のGit LFSの仕様としては、`Basic Transfer`方式のみをサポートしています。
-- 値は文字列の配列で`basic`のみ受け付けます。
-- 省略された場合、Git LFSサーバはデフォルトの挙動として`Basic Transfer`方式を想定する必要があります。
-- operationが`upload`の時は[tusプロトコル](https://tus.io/protocols/resumable-upload.html)を使用できます。tusプロトコルはあくまでオプショナルなのでサーバー側で実装しなくてもGit LFSは問題なく動作します。
+Git LFSクライアントが設定した転送方式を示します。現在（2020/12）のGit LFSの仕様ではBasic Transfer方式のみをサポートしています。
 
-``ref``
+値は文字列の配列でBasic Transfer方式を示す`basic`のみ受け付けます。省略された場合、Git LFSサーバはデフォルトの挙動としてBasic Transfer方式を想定する必要があります。
 
-- 転送するLFSオブジェクトが属しているシンボリック参照を示すオブジェクトです。Git LFS v2.4から追加されました。具体的には`name`プロパティに`refs/heads/master`のようなLFSオブジェクトが属するブランチのパスが格納されます。
-- これにより、Git LFSサーバーはブランチ等のシンボリック参照単位で認証できるようになります。
-- サーバーはこの値を無視しても問題なく動作します。
+`operation`が`upload`の時は[tusプロトコル](https://tus.io/protocols/resumable-upload.html)を使用できます。tusプロトコルはあくまで任意なのでサーバー側で実装しなくてもGit LFSは問題なく動作します。
 
-``objects``
+`ref`
 
-- 転送するオブジェクトの配列です。
-- `oid`はLFSオブジェクトの識別子となる、LFSオブジェクトの中身から算出されたSHA256の文字列です。
-- `size`はLFSオブジェクトのバイトサイズを示す整数です。
+転送するLFSオブジェクトが属しているシンボリック参照を示すオブジェクトです。Git LFS v2.4から追加されました。
 
-#### 成功したレスポンス
+`ref.name`
+
+シンボリック参照と呼ばれる`refs/heads/master`のような形式のブランチのパスの文字列が格納されます。これにより、Git LFSサーバーは転送するLFSオブジェクトが属するブランチ単位で認証できるようになります。サーバーはこの値を無視しても問題なく動作します。
+
+`objects`
+
+転送するオブジェクトの配列です。
+
+`object.oid`
+
+LFSオブジェクトの識別子となる、LFSオブジェクトの中身から算出されたSHA256の文字列です。
+
+`object.size`
+
+LFSオブジェクトのバイトサイズを示す整数です。
+
+#### 成功時のレスポンス
 
 以下は、Batch APIの成功時のレスポンスの例です。リクエストに問題がある場合（不正な承認、不正なjsonなど）がない限り、Batch APIは常に200のステータスを返す必要があります。
 
@@ -296,15 +304,42 @@ Content-Type: application/vnd.git-lfs+json
 }
 ```
 
-``transfer``
+`transfer`
 
-- Git LFS サーバーが優先する転送方式を示す文字列です。基本的には`basic`転送方式となります。
-- リクエストから与えられた転送方式の1つでなければなりません。
-- このプロパティを省略すると、LFSクライアントは`basic`転送方式を使用します。
+Git LFS サーバーが優先する転送方式を示す文字列です。基本的にはBasic Transfer方式となります。
 
-``objects``
+リクエストから与えられた転送方式である`transfers`の1つでなければなりません。
 
-- 転送するLFSオブジェクトの配列です。
-- `oid`はLFSオブジェクトの識別子となるLFSオブジェクトの中身から算出されたSHA256の文字列です。
-- `size`はLFSオブジェクトのバイトサイズを示す整数です。
-- `authenticated`は対象のLFSオブジェクトに対するリクエストが認証されたかどうかを示す真偽値です。省略またはfalseの場合、Git LFSコマンドはリポジトリの認証情報を探して、LFSオブジェクトの転送時のBasic認証で使用します。
+このプロパティを省略すると、LFSクライアントはBasic Transfer方式を使用します。
+
+`objects`
+
+転送するLFSオブジェクトの配列です。
+
+`object.oid`
+
+LFSオブジェクトの識別子となるLFSオブジェクトの中身から算出されたSHA256の文字列です。
+
+`object.size`
+
+LFSオブジェクトのバイトサイズを示す整数です。
+
+`object.authenticated`
+
+対象のLFSオブジェクトに対するリクエストが認証されたかどうかを示す真偽値です。省略またはfalseの場合、Git LFSコマンドはリポジトリの認証情報を探して、LFSオブジェクトの転送時のBasic認証で使用します。
+
+`object.actions`
+
+Git LFSクライアントが次に行うアクションを示すオブジェクトです。
+
+返却されるアクションはリクエストで指定された`operation`によって異なり、`download`、`upload`、`verify`のいずれかのキーを持ちます。
+
+また、なんらかの理由でLFSオブジェクトをダウンロードできない場合は、`error`をキーにしてLFSオブジェクト単位のエラー情報を含める必要があります。
+
+リクエストの`operation`が`download`の場合、レスポンスの`actions`に`download`を含める必要があります。
+
+リクエストの`operation`が`upload`の場合、レスポンスの`actions`に`uplaod`と`verify`を含めることができます。
+
+レスポンスのオブジェクトに`verify`のアクションがある場合、LFSクライアントはアップロードが成功した後にこのURLへリクエストします。リクエスト先のサーバーは必要に応じて対象のLFSオブジェクトの検証処理用のエンドポイントとして使用できます。
+
+LFSクライアントがLFSサーバーが既に持っているオブジェクトをアップロードするようにリクエストした場合、LFSサーバーは対象のLFSオブジェクトの`actions`プロパティを完全に省略しれレスポンスを返却する必要があります。LFSクライアントは、LFSサーバーが既に持っていると仮定して動作します。
