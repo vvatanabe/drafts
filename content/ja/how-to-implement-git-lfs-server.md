@@ -360,3 +360,38 @@ LFSオブジェクトをダウンロードやアップロードする有効期�
 
 LFSオブジェクトをダウンロードやアップロードする有効期限をRFC3339形式（大文字のタイムスタンプ）で表します。
 
+#### エラーレスポンス
+
+それぞれのLFSオブジェクトへのアクセスに問題がある場合、LFSサーバーは200のステータスコードを返し、LFSオブジェクトごとのエラー内容を提供する必要があります。
+`error.code`には可能な限り40x等のHTTPのステータスコードを使用すべきです。例えば、対象のLFSオブジェクトはサーバー上で見つからない場合は、`error.code`は404を指定してください。
+
+以下はその例です。
+
+```
+// HTTP/1.1 200 Ok
+// Content-Type: application/vnd.git-lfs+json
+{
+  "transfer": "basic",
+  "objects": [
+    {
+      "oid": "1111111",
+      "size": 123,
+      "error": {
+        "code": 404,
+        "message": "Object does not exist"
+      }
+    }
+  ]
+}
+```
+
+```
+// HTTP/1.1 404 Not Found
+// Content-Type: application/vnd.git-lfs+json
+
+{
+  "message": "Not found",
+  "documentation_url": "https://example.com/docs/errors",
+  "request_id": "123"
+}
+```
