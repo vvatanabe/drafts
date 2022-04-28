@@ -494,3 +494,43 @@ LFSクライアントは、上記のようなBatch APIのレスポンスを受�
 <
 < {contents}
 ```
+
+#### アップロード
+
+LFSクライアントはPUTリクエストでLFSオブジェクトの実態をアップロードします。
+アップロード先となるURLはBatch APIレスポンスの`actions`プロパティの`upload`オブジェクトに記載されています。
+
+```
+{
+  "transfer": "basic",
+  "objects": [
+    {
+      "oid": "1111111",
+      "size": 123,
+      "authenticated": true,
+      "actions": {
+        "upload": {
+          "href": "https://some-upload.com/1111111",
+          "header": {
+            "Authorization": "Basic ..."
+          },
+          "expires_in": 86400
+        }
+      }
+    }
+  ]
+}
+```
+
+LFSクライアントは、上記のようなBatch APIのレスポンスを受取ると、`href`プロパティのURLに対してPUTリクエストします。その際、HTTPリクエストのヘッダーには`header`プロパティの情報を含めます。`body`に含めるのはLFSオブジェクトの生のバイト列です。
+
+```
+> PUT https://some-upload.com/1111111
+> Authorization: Basic ...
+> Content-Type: application/octet-stream
+> Content-Length: 123
+>
+> {contents}
+>
+< HTTP/1.1 200 OK
+```
